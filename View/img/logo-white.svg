@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="560 250 520 800" role="img" aria-label="Win Wselna? logo">
+  <ellipse cx="770" cy="1018" rx="38" ry="9" fill="#E60012"/>
+  <path d="M770 367V345C770 292 828 272 884 276C960 282 1040 330 1040 410C1040 452 1014 472 1000 490C990 504 990 518 990 532" fill="none" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="990" cy="590" r="27" fill="#13A89E"/>
+  <path d="M630 558C598 600 588 650 594 692C606 790 700 900 770 1008C840 900 934 790 946 692C952 650 942 600 912 558Z" fill="#FFFFFF"/>
+  <path d="M655 376Q657 357 676 357H866Q885 357 887 376L915 560H627Z" fill="#E60012"/>
+  <path d="M631 525H911L915 560H627Z" fill="#B00012"/>
+  <circle cx="713" cy="643" r="46" fill="#0D2547" stroke="#0D2547" stroke-width="14"/>
+  <circle cx="828" cy="643" r="46" fill="#0D2547" stroke="#0D2547" stroke-width="14"/>
+  <path d="M759 641Q770 633 782 641" fill="none" stroke="#0D2547" stroke-width="10"/>
+  <path d="M690 632A28 28 0 0 1 712 610" fill="none" stroke="#13A89E" stroke-width="9" stroke-linecap="round"/>
+  <path d="M805 632A28 28 0 0 1 827 610" fill="none" stroke="#13A89E" stroke-width="9" stroke-linecap="round"/>
+  <path d="M770 712C745 700 715 702 695 716C680 726 662 724 648 712C650 740 680 758 712 752C740 748 760 735 770 728C780 735 800 748 828 752C860 758 890 740 892 712C878 724 860 726 845 716C825 702 795 700 770 712Z" fill="#0D2547"/>
+</svg>
