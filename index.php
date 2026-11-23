@@ -25,7 +25,7 @@ ini_set('session.use_only_cookies', '1');
 // ini_set('session.cookie_secure', '1');   // enable when the site is served over HTTPS
 session_start();
 
-require_once __DIR__ . '/Config/config.php';
+require_once __DIR__ . '/Config/database.php';
 
 // --------------------------------------------------------------
 // 2. Session expiration after 30 minutes of inactivity

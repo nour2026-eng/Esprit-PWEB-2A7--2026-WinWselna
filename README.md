@@ -108,7 +108,7 @@ The project follows the **MVC (Model – View – Controller)** pattern.
 ```
 winwselna/
 ├── index.php               # single entry point (front controller): index.php?action=...
-├── Config/                 # database.php (PDO singleton) · config.php (constants, helpers)
+├── Config/                 # database.php: constants, PDO connection (singleton), display helpers
 ├── Controller/             # AuthController · UserController · StatsController (all the business logic)
 ├── Model/                  # UserModel (attributes, getters/setters only)
 ├── View/                   # user interface (opening View/ lists only frontoffice/ and backoffice/)

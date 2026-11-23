@@ -1,8 +1,22 @@
 <?php
 /**
- * Config/database.php
- * Secure PDO connection — Singleton: one connection shared by the whole application.
+ * Config/database.php — the only configuration file of the application:
+ *  1. application constants (URL, session lifetime)
+ *  2. secure PDO connection (Singleton: one connection shared by the whole application)
+ *  3. small display helpers used by the views (escaping, links, flash messages)
  */
+
+// ==============================================================
+// 1. APPLICATION CONSTANTS
+// ==============================================================
+// Base URL of the application, e.g. "/winwselna/" — detected from the front controller location.
+define('BASE_URL', rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/') . '/');
+define('APP_NAME', 'Win Wselna?');
+define('SESSION_LIFETIME', 1800); // 30 minutes of inactivity
+
+// ==============================================================
+// 2. DATABASE CONNECTION (PDO Singleton)
+// ==============================================================
 class Database
 {
     private static ?PDO $pdo = null;
@@ -34,4 +48,32 @@ class Database
         }
         return self::$pdo;
     }
+}
+
+// ==============================================================
+// 3. DISPLAY HELPERS (used by the views)
+// ==============================================================
+/** Escape any value before printing it in HTML (anti-XSS). */
+function e($value): string
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+/** Build a link to a route of the front controller: url('news') → /winwselna/index.php?action=news */
+function url(string $action = 'home', array $params = []): string
+{
+    $query = array_merge(['action' => $action], $params);
+    return BASE_URL . 'index.php?' . http_build_query($query);
+}
+
+/** Store a one-time message in the session (2 arguments), or read and clear it (no argument). */
+function flash(?string $type = null, ?string $message = null): ?array
+{
+    if ($type !== null) {
+        $_SESSION['flash'] = ['type' => $type, 'message' => $message];
+        return null;
+    }
+    $f = $_SESSION['flash'] ?? null;
+    unset($_SESSION['flash']);
+    return $f;
 }
