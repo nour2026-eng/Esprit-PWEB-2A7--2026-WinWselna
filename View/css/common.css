@@ -12,7 +12,7 @@
   --ink:#0B2545; --body:#33445C; --muted:#6B7A8F; --line:#E6DDCF; --line-2:#EEF0F4;
   /* modules */
   --c-news:#2F6FDB; --c-projects:#D99A00; --c-safe:#E70013;
-  --c-request:#0F9488; --c-event:#7B5CFF; --c-jobs:#2F9E44; --c-user:#0B2545;
+  --c-request:#0F9488; --c-transport:#0F9488; --c-event:#7B5CFF; --c-jobs:#2F9E44; --c-user:#0B2545;
   /* status */
   --ok:#13A89E; --warn:#F5A300; --bad:#E70013; --info:#2F6FDB;
   /* type */
@@ -50,7 +50,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 /* ---------- module colour helper: set --m on any element ---------- */
 .m-news{--m:var(--c-news)} .m-projects{--m:var(--c-projects)} .m-safe{--m:var(--c-safe)}
-.m-request{--m:var(--c-request)} .m-event{--m:var(--c-event)} .m-jobs{--m:var(--c-jobs)} .m-user{--m:var(--c-user)}
+.m-request{--m:var(--c-request)} .m-transport{--m:var(--c-transport)} .m-event{--m:var(--c-event)} .m-jobs{--m:var(--c-jobs)} .m-user{--m:var(--c-user)}
 
 /* ---------- buttons ---------- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;border-radius:999px;padding:11px 20px;font-family:var(--f-head);font-weight:600;font-size:14px;line-height:1;transition:transform .2s var(--ease),box-shadow .2s var(--ease),background .2s;white-space:nowrap}
@@ -155,3 +155,31 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 @media (max-width:640px){.grid-2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* ---------- server messages (flash / form errors) ---------- */
+.alert{display:flex;gap:10px;align-items:flex-start;padding:12px 16px;border-radius:14px;font-size:14px;font-weight:500;margin-bottom:16px;line-height:1.45}
+.alert .ico{margin-top:1px}
+.alert-success{background:#E3F6F4;color:#0B6B64;border:1px solid #BFE9E4}
+.alert-error{background:#FDE7EA;color:#A8001A;border:1px solid #F7C5CC}
+.alert ul{margin:4px 0 0;padding-left:18px}
+.field .err-srv{font-size:12px;color:var(--red);font-weight:600}
+.field.has-error .input,.field.has-error .select,.field.has-error .textarea{border-color:var(--red)}
+
+/* ---------- empty states (no data in the database yet) ---------- */
+.empty{text-align:center;padding:46px 24px;border-radius:var(--r-lg);background:#fff;border:2px dashed var(--line);color:var(--muted)}
+.empty .m-ico,.empty-ico{width:64px;height:64px;border-radius:20px;margin:0 auto 14px;display:grid;place-items:center;background:color-mix(in srgb,var(--m,var(--navy)) 12%,#fff);color:var(--m,var(--navy))}
+.empty .empty-ico .ico{width:30px;height:30px}
+.empty h3{font-size:18px;margin:0 0 6px}
+.empty p{max-width:460px;margin:0 auto;font-size:14px}
+.empty .btn{margin-top:16px}
+
+/* ---------- confirmation dialog (WW.ask) — replaces the browser's native confirm() ---------- */
+.ww-ask{z-index:400}
+.ask-box{width:min(420px,100%);padding:30px 26px 24px;text-align:center}
+.ask-ico{width:62px;height:62px;border-radius:20px;margin:0 auto 14px;display:grid;place-items:center;background:#E3F6F4;color:var(--teal-d)}
+.ask-ico.danger{background:#FDE7EA;color:var(--red)}
+.ask-box h3{font-size:20px;margin:0 0 6px}
+.ask-box p{margin:0 0 22px;font-size:14.5px}
+.ask-box p:empty{display:none}
+.ask-actions{display:flex;gap:10px;justify-content:center}
+.ask-actions .btn{min-width:120px}

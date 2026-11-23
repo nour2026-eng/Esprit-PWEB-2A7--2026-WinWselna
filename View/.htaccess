@@ -1,0 +1,16 @@
+# ------------------------------------------------------------------
+# View/ — opening this folder shows only two folders: frontoffice/ and backoffice/
+# ------------------------------------------------------------------
+Options +Indexes
+DirectoryIndex index.php
+IndexOptions FancyIndexing HTMLTable SuppressDescription SuppressLastModified SuppressSize NameWidth=*
+IndexIgnore css js img lib errors .htaccess *.php
+
+# Views are never opened directly: every page goes through ../index.php?action=...
+<FilesMatch "\.php$">
+  Require all denied
+</FilesMatch>
+# ...except the two folder entries (frontoffice/index.php, backoffice/index.php) which only redirect to the router
+<Files "index.php">
+  Require all granted
+</Files>

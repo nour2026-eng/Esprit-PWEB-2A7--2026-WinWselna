@@ -5,7 +5,8 @@
 const WW = (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const icon = (id, cls = 'ico') => `<svg class="${cls}"><use href="${WW_BASE}img/icons.svg#${id}"/></svg>`;
+  /* asset paths are resolved by the <base href="…/View/"> tag of every page */
+  const icon = (id, cls = 'ico') => `<svg class="${cls}"><use href="img/icons.svg#${id.startsWith('i-') ? id : 'i-' + id}"/></svg>`;
 
   /* ---------- toast ---------- */
   function toast(msg, type = 'ok') {
@@ -56,6 +57,8 @@ const WW = (() => {
     else if (v && el.type === 'email' && !rules.email(v)) ok = false;
     else if (v && el.dataset.type === 'phone' && !rules.phone(v)) ok = false;
     else if (v && el.dataset.digits !== undefined && !/^\d+$/.test(v.trim())) ok = false;
+    else if (v && el.dataset.strong !== undefined && !(/[A-Za-z]/.test(v) && /\d/.test(v) && v.length >= 8)) ok = false;
+    else if (v && el.dataset.name !== undefined && !/^[\p{L}][\p{L}' -]{2,99}$/u.test(v.trim())) ok = false;
     else if (v && el.dataset.min && v.trim().length < +el.dataset.min) ok = false;
     else if (v && el.dataset.max && v.trim().length > +el.dataset.max) ok = false;
     else if (v && el.type === 'number' && ((el.min !== '' && +v < +el.min) || (el.max !== '' && +v > +el.max))) ok = false;
@@ -76,10 +79,53 @@ const WW = (() => {
     const form = e.target; if (!form.matches('form[data-validate]')) return;
     e.preventDefault();
     if (!validateForm(form)) { toast('Please check the highlighted fields', 'bad'); return; }
+    /* forms connected to the database: send to PHP (which validates again on the server) */
+    if (form.dataset.server !== undefined) { const b = form.querySelector('[type=submit]'); if (b) b.disabled = true; form.submit(); return; }
+    /* forms of modules not connected yet: say it honestly, no fake success */
+    if (form.dataset.pending !== undefined) { toast('This module is not connected to the database yet.', 'bad'); return; }
     form.dispatchEvent(new CustomEvent('ww:valid', { bubbles: true }));
     if (form.dataset.success) { toast(form.dataset.success); if (!form.dataset.keep) form.reset(); $$('.dropzone .dz-name', form).forEach(n => n.textContent = ''); const m = form.closest('.modal'); if (m) closeModal(m); }
     if (form.dataset.redirect) setTimeout(() => location.href = form.dataset.redirect, 700);
   });
+
+  /* ---------- buttons that only show a message (replaces inline onclick, blocked by the CSP) ---------- */
+  document.addEventListener('click', e => { const t = e.target.closest('[data-toast]'); if (t) toast(t.dataset.toast, t.dataset.toastType || 'ok'); });
+
+  /* ---------- confirmation dialog in the site design (never the browser's native confirm()) ----------
+     WW.ask({ title, message, ok, cancel, danger }) → Promise<boolean> */
+  function ask(opts = {}) {
+    const o = Object.assign({ title: 'Are you sure?', message: '', ok: 'Confirm', cancel: 'Cancel', danger: true }, opts);
+    return new Promise(resolve => {
+      const m = document.createElement('div');
+      m.className = 'modal ww-ask'; m.setAttribute('role', 'alertdialog'); m.setAttribute('aria-modal', 'true');
+      m.innerHTML = `<div class="modal-backdrop"></div>
+        <div class="modal-box ask-box">
+          <div class="ask-ico ${o.danger ? 'danger' : ''}">${icon(o.danger ? 'trash' : 'check', 'ico ico-lg')}</div>
+          <h3></h3><p class="muted"></p>
+          <div class="ask-actions"><button type="button" class="btn btn-ghost" data-ask="no"></button><button type="button" class="btn ${o.danger ? 'btn-primary' : 'btn-teal'}" data-ask="yes"></button></div>
+        </div>`;
+      $('h3', m).textContent = o.title; $('p', m).textContent = o.message;            // textContent: no HTML injection
+      $('[data-ask=no]', m).textContent = o.cancel; $('[data-ask=yes]', m).textContent = o.ok;
+      document.body.appendChild(m);
+      const prevFocus = document.activeElement;
+      const close = val => { m.classList.remove('open'); document.removeEventListener('keydown', onKey, true); setTimeout(() => m.remove(), 250); if (prevFocus && prevFocus.focus) prevFocus.focus(); resolve(val); };
+      const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); close(false); } };
+      m.addEventListener('click', e => { if (e.target.matches('.modal-backdrop') || e.target.closest('[data-ask=no]')) close(false); else if (e.target.closest('[data-ask=yes]')) close(true); });
+      document.addEventListener('keydown', onKey, true);
+      void m.offsetWidth;                         // force a reflow so the opening transition plays
+      m.classList.add('open'); $('[data-ask=no]', m).focus();
+    });
+  }
+
+  /* <form data-confirm="message" [data-confirm-title] [data-confirm-ok]>: valid fields first, then our dialog, then submit */
+  document.addEventListener('submit', e => {
+    const f = e.target;
+    if (!f.dataset.confirm || f._confirmed) { if (f) f._confirmed = false; return; }
+    if (f.matches('form[data-validate]') && !validateForm(f)) return;                // let the validation handler show the errors
+    e.preventDefault(); e.stopImmediatePropagation();
+    ask({ title: f.dataset.confirmTitle || 'Please confirm', message: f.dataset.confirm, ok: f.dataset.confirmOk || 'Yes, continue' })
+      .then(yes => { if (yes) { f._confirmed = true; f.requestSubmit ? f.requestSubmit() : f.submit(); } });
+  }, true);
 
   /* ---------- dropzones ---------- */
   $$('.dropzone').forEach(dz => {
@@ -115,5 +161,5 @@ const WW = (() => {
     });
   }
 
-  return { $, $$, icon, toast, openModal, closeModal, validateForm, validateField, animateIn };
+  return { $, $$, icon, toast, ask, openModal, closeModal, validateForm, validateField, animateIn };
 })();

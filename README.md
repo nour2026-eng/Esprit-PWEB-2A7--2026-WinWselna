@@ -5,7 +5,7 @@
 # Win Wselna? – Citizen Platform for Public Services
 
 > **"Win wselna?" (وين وصلنا؟) – "Where are we at?"**
-> The question every Tunisian asks about a road under construction, a request at the town hall or a problem in the street.
+> The question every Tunisian asks about a road under construction, a bus that never comes or a problem in the street.
 > *The state in your pocket.*
 
 ![Esprit School of Engineering](https://img.shields.io/badge/Esprit-School%20of%20Engineering-E70013)
@@ -44,10 +44,10 @@ This project was developed as part of the **Web Technologies Project (PW) – 2n
 
 - official news arrives late and is mixed with rumours;
 - public projects are announced, then nobody knows where they are at;
-- reclamations and administrative requests disappear without any follow-up;
+- reclamations disappear without any follow-up, and public transport gives no live information or online tickets;
 - citizens are rarely consulted, and local jobs created by public works are not visible.
 
-**Our answer.** One website where a citizen can read verified news, follow public projects milestone by milestone, submit and track reclamations and administrative requests, register for public consultations and apply to jobs created by the projects near them. Every action follows the same visible path: *submit → processed by an agent → answered → done.*
+**Our answer.** One website where a citizen can read verified news, follow public projects milestone by milestone, submit and track reclamations, check bus and metro lines and buy tickets online, register for public consultations and apply to jobs created by the projects near them. Every action follows the same visible path: *submit → processed by an agent → answered → done.*
 
 **Main objective (SDG 16):** rebuild trust between citizens and institutions through transparency and traceability.
 
@@ -62,22 +62,22 @@ The platform is organised in **6 modules**, each built on **2 entities** with fu
 | **Win News** | *"What's happening today?"* | `Category` → `Article` | Articles by category, search and filters, 60-second AI summary, article linked to a project |
 | **Win Projects** | *"Where is this project at?"* | `Project` → `Milestone` | Project list and details, progress bar, milestone timeline, follow a project, linked events and jobs |
 | **Win Safe** | *"Who fixes this pothole?"* | `Reclamation` → `Response` | Submit a reclamation (type, location, photo), edit or cancel while *Sent*, status tracking, agent responses |
-| **Win Request** | *"Where is my paperwork at?"* | `RequestType` → `Request` | Catalogue of documents (required files, delay), submit with uploads, status stepper *Pending → Accepted / Refused* |
+| **Win Transport** | *"Where's my bus?"* | `TransportLine` → `Ticket` | Bus, metro, train and louage lines with their status during public works, buy a ticket online with a QR code, cancel it, validation on board by an agent |
 | **Win Event** | *"Can I have my say?"* | `Event` → `Participation` | Public consultations, meetings and openings, registration with capacity check, attendance |
 | **Win Jobs** | *"Is there work near me?"* | `JobOffer` → `Application` | Job offers created by public projects, apply with a CV, track or withdraw an application |
 | **Win Account** | – | `User` | Sign up, log in, profile, roles **Client · Agent · Admin** |
 
 **Front office (citizen side)**
 - Responsive home page with live figures, latest news, nearby projects, events and jobs
-- "My space": all of the client's reclamations, requests, registrations and applications in one place
+- "My space": all of the client's reclamations, tickets, registrations and applications in one place
 - **3am Win**, the assistant mascot, answering in Darija, Arabic or French
 - Client-side input validation on every form (required fields, email, Tunisian phone number, lengths, files, dates)
 
 **Back office (dashboard)**
-- Dashboard with KPIs, charts (reclamations received vs resolved, requests by status) and activity per module
+- Dashboard with KPIs, charts (reclamations received vs resolved, tickets by status) and activity per module
 - One CRUD page per entity: search, filter, sortable columns, pagination, add / edit form, delete confirmation
-- Reclamation detail with response thread; accept / refuse panels for requests and applications
-- Role-based navigation: **Admin** manages all content and users, **Agent** processes reclamations, requests and milestones
+- Reclamation detail with response thread; ticket validation panel; accept / refuse panel for applications
+- Role-based navigation: **Admin** manages all content and users, **Agent** answers reclamations, validates tickets and updates milestones
 
 ---
 
@@ -107,14 +107,16 @@ The project follows the **MVC (Model – View – Controller)** pattern.
 
 ```
 winwselna/
-├── Config/                 # database connection & configuration (PHP)
-├── Controller/             # one controller per entity – receives requests, calls the model, chooses the view
-├── Model/                  # one class per entity (User, Article, Project, Reclamation…)
-├── View/                   # user interface
-│   ├── index.php           # front office pages (news, projects, reclamations, requests, events, jobs, account…)
-│   ├── includes/           # shared parts: head, spinner, navbar, footer, scripts
-│   ├── admin/              # back office (dashboard + 12 CRUD pages)
+├── index.php               # single entry point (front controller): index.php?action=...
+├── Config/                 # database.php (PDO singleton) · config.php (constants, helpers)
+├── Controller/             # AuthController · UserController · StatsController (all the business logic)
+├── Model/                  # UserModel (attributes, getters/setters only)
+├── View/                   # user interface (opening View/ lists only frontoffice/ and backoffice/)
+│   ├── frontoffice/        # website: home, news, projects, reclamations, transport, events, jobs, login, register, account
+│   │   └── includes/       # shared parts: head, spinner, navbar, footer, flash, scripts
+│   ├── backoffice/         # dashboard, users, profile + one page per module entity
 │   │   └── includes/       # shared parts: head, sidebar, topbar, footer, scripts
+│   ├── errors/             # 403 (access denied) · 404 (page not found)
 │   ├── css/                # common.css (design system) · style.css (front) · admin.css (back)
 │   ├── js/                 # common.js · main.js (front) · admin.js (back)
 │   ├── img/                # logo, icons, illustrations
@@ -130,9 +132,9 @@ winwselna/
 ```
 users ─┬─< reclamations >─┬─ projects ─┬─< milestones
        │        └─< responses          ├─< articles >── categories
-       ├─< requests >── request_types  ├─< events ─< participations >── users
-       ├─< participations              └─< job_offers ─< applications >── users
-       └─< applications
+       ├─< tickets >── transport_lines ─┤
+       ├─< participations              ├─< events ─< participations >── users
+       └─< applications                └─< job_offers ─< applications >── users
 ```
 
 | Link | Foreign key |
@@ -143,8 +145,9 @@ users ─┬─< reclamations >─┬─ projects ─┬─< milestones
 | Reclamation concerns Project | `reclamations.project_id` (optional) |
 | User submits Reclamation | `reclamations.user_id` |
 | Reclamation answered by Response | `responses.reclamation_id` |
-| RequestType types Request | `requests.type_id` |
-| User submits Request | `requests.user_id` |
+| TransportLine is served / improved by Project | `transport_lines.project_id` (optional) |
+| TransportLine sells Tickets | `tickets.line_id` |
+| User buys Ticket | `tickets.user_id` |
 | Event is about Project | `events.project_id` (optional) |
 | Event receives Participations | `participations.event_id` |
 | User registers (Participation) | `participations.user_id` |
@@ -165,7 +168,7 @@ users ─┬─< reclamations >─┬─ projects ─┬─< milestones
 | Omar Abidi | Win News | Category, Article |
 | Nourelhouda Haj Mefteh | Win Projects | Project, Milestone |
 | Majdi Khaldi | Win Safe | Reclamation, Response |
-| Jasser Aouedi | Win Request | RequestType, Request |
+| Jasser Aouedi | Win Transport | TransportLine, Ticket |
 | Fatma Tlili | Win Event | Event, Participation |
 | Eya Sallem | Win Jobs | JobOffer, Application |
 
@@ -209,14 +212,21 @@ Developed at **Esprit School of Engineering – Tunisia**
 
 ## Usage
 
-| Side | URL |
-|---|---|
-| Front office (citizen) | [http://localhost/winwselna/View/index.php](http://localhost/winwselna/View/index.php) |
-| Back office login (agent / admin) | [http://localhost/winwselna/View/admin/login.php](http://localhost/winwselna/View/admin/login.php) |
-| Dashboard | [http://localhost/winwselna/View/admin/index.php](http://localhost/winwselna/View/admin/index.php) |
+Every page goes through the single entry point `index.php?action=...` (MVC front controller).
 
-* From the front office, the **Back office** button in the top bar (or **Staff access** on the login page) leads to the dashboard.
-* Create a client account from **Create an account**; agent and admin accounts are created by an admin in **Users & roles**.
+| Page | URL |
+|---|---|
+| Choose a space (lists `frontoffice/` and `backoffice/`) | [http://localhost/winwselna/](http://localhost/winwselna/) → `View/` |
+| Website (front office) | [http://localhost/winwselna/View/frontoffice/](http://localhost/winwselna/View/frontoffice/) |
+| Back office (login required) | [http://localhost/winwselna/View/backoffice/](http://localhost/winwselna/View/backoffice/) |
+| Log in (every role) | [http://localhost/winwselna/index.php?action=login](http://localhost/winwselna/index.php?action=login) |
+| Sign up | [http://localhost/winwselna/index.php?action=register](http://localhost/winwselna/index.php?action=register) |
+| Dashboard (admin / agent) | [http://localhost/winwselna/index.php?action=admin](http://localhost/winwselna/index.php?action=admin) |
+
+* **One login page for everyone.** After login the role stored in the database decides where the user goes: `ADMIN` and `AGENT` → dashboard, `CLIENT` → website and "My space".
+* **First administrator:** sign up normally (the role is always `CLIENT`), then in phpMyAdmin set `role = 'ADMIN'` for that user in the `users` table and log in again. That admin can then create agents and other admins in **Users & roles**.
+* **Access rules:** an agent sees the dashboard, milestones, reclamations and tickets; only an admin manages users and the other modules. Any other page answers **403 Access denied**.
+* **Security:** passwords hashed with `password_hash()`, prepared statements (PDO), CSRF token on every form, `session_regenerate_id()` at login, session cookie `HttpOnly` + `SameSite=Lax`, 30-minute inactivity timeout, security headers (CSP, X-Frame-Options…), view files not reachable directly.
 * PHP pages must be opened through Apache (`http://localhost/...`), not by double-clicking the file.
 
 ---

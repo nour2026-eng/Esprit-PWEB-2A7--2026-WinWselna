@@ -35,24 +35,28 @@
     const say = (txt, who = 'bot', ar) => { const m = document.createElement('div'); m.className = 'msg ' + who; if (ar) { const a = document.createElement('span'); a.className = 'ar'; a.textContent = ar; m.appendChild(a); } m.appendChild(document.createTextNode(txt)); body.appendChild(m); body.scrollTop = body.scrollHeight; };
     const answers = [
       [/reclam|pothole|complain|chkaya|شكاية/i, 'You can submit a reclamation in Win Safe. Add a photo and the location, then track its status.', 'نجم نعاونك تبعث شكاية'],
-      [/request|paper|certif|document|wraq|وثيقة/i, 'Pick a request type in Win Request: the required documents and delay are listed for each one.', 'شوف قائمة الوثائق المطلوبة'],
+      [/bus|metro|train|louage|ticket|transport|car|كار|تران/i, 'Win Transport shows every line with its status. Buy your ticket online and show the QR code on board.', 'الكار متاعك وين وصل؟'],
       [/project|road|chantier|site|مشروع/i, 'Open Win Projects to see progress, milestones and linked events or jobs.', 'المشروع هذا وين وصل؟'],
       [/event|meeting|consult|اجتماع/i, 'Upcoming consultations are in Win Event. Registration takes one click.', 'سجّل روحك في الاجتماع'],
       [/job|work|khedma|خدمة/i, 'Win Jobs lists offers created by public projects near you. Upload your CV to apply.', 'فما خدمة قريبة منك'],
     ];
-    const reply = q => { const a = answers.find(r => r[0].test(q)); setTimeout(() => a ? say(a[1], 'bot', a[2]) : say('I can help with news, projects, reclamations, requests, events and jobs. What do you need?', 'bot', 'آش نجم نعاونك؟'), 500); };
+    const reply = q => { const a = answers.find(r => r[0].test(q)); setTimeout(() => a ? say(a[1], 'bot', a[2]) : say('I can help with news, projects, reclamations, transport, events and jobs. What do you need?', 'bot', 'آش نجم نعاونك؟'), 500); };
     fab.addEventListener('click', () => { panel.classList.toggle('open'); if (panel.classList.contains('open')) input.focus(); });
     $('.chat-close', panel).addEventListener('click', () => panel.classList.remove('open'));
     form.addEventListener('submit', e => { e.preventDefault(); const q = input.value.trim(); if (!q) return; say(q, 'me'); input.value = ''; reply(q); });
     $$('.chat-quick button', panel).forEach(b => b.addEventListener('click', () => { say(b.textContent, 'me'); reply(b.textContent); }));
   }
 
-  /* request type picker → fills the hidden select of the form */
-  $$('.rtype').forEach(card => card.addEventListener('click', () => {
-    $$('.rtype').forEach(c => c.classList.toggle('selected', c === card));
-    const sel = $('#req-type'); if (sel) { sel.value = card.dataset.type; sel.dispatchEvent(new Event('change', { bubbles: true })); }
-    const f = $('#request-form'); f && f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  /* Win Transport: buy a ticket → line name + total = fare × quantity */
+  let fare = 0;
+  const qty = $('#tk-qty'), total = $('#tk-total');
+  const updateTotal = () => { const q = Math.min(10, Math.max(1, +qty.value || 1)); total.textContent = (fare * q).toFixed(3) + ' TND'; };
+  $$('[data-buy]').forEach(b => b.addEventListener('click', () => {
+    fare = +b.dataset.fare; $('#tk-line').textContent = b.dataset.buy;
+    const d = $('#ticket-modal [name=travel_date]'); if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+    updateTotal();
   }));
+  qty && qty.addEventListener('input', updateTotal);
 
   /* event registration toggle */
   $$('[data-register]').forEach(btn => btn.addEventListener('click', () => {
@@ -72,7 +76,12 @@
   $$('[data-follow]').forEach(b => b.addEventListener('click', () => { const on = b.classList.toggle('on'); b.innerHTML = WW.icon(on ? 'check' : 'bell', 'ico ico-sm') + (on ? ' Following' : ' Follow this project'); toast(on ? 'You will be notified of every new milestone' : 'Project unfollowed'); }));
 
   /* cancel buttons on my lists */
-  $$('[data-cancel]').forEach(b => b.addEventListener('click', () => { const row = b.closest('[data-item]'); if (confirm('Cancel this ' + b.dataset.cancel + '?')) { row.style.opacity = '.4'; b.disabled = true; toast(b.dataset.cancel[0].toUpperCase() + b.dataset.cancel.slice(1) + ' cancelled'); } }));
+  $$('[data-cancel]').forEach(b => b.addEventListener('click', async () => {
+    const what = b.dataset.cancel, row = b.closest('[data-item]');
+    if (await WW.ask({ title: 'Cancel this ' + what + '?', message: 'This action cannot be undone.', ok: 'Yes, cancel it', cancel: 'Keep it' })) {
+      row.style.opacity = '.4'; b.disabled = true; toast(what[0].toUpperCase() + what.slice(1) + ' cancelled');
+    }
+  }));
 
   /* newsletter */
   const nl = $('.newsletter'); nl && nl.addEventListener('submit', e => { e.preventDefault(); const i = $('input', nl); if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(i.value)) { toast('Please enter a valid email', 'bad'); return; } i.value = ''; toast('Subscribed to the weekly briefing'); });
